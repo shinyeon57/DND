@@ -108,12 +108,13 @@ static void L3service_processInputWord(void)
 //mode 진입을 위한 제어 key SDU 생성=====================================
 static void L3service_processInputMode(void)
 { 
-    char input_mode = pc.getc();
+    pc.printf(":: ENTER THE MODE: \n");
+    char input_mode = pc.getc();  
 
-    pc.printf(":: ENTER THE MODE: \n");      
-    
-    if(!L3_event_checkEventFlag(L3_event_MODEctrlRcvd))            ///////event = 제어정보 IND
-    {                                       
+    if (!L3_event_checkEventFlag(L3_event_dataToSend))
+    {    
+        originalWord[wordLen++] = input_mode;
+
         if(input_mode == '\t')                                      //dnd mode = tab key
         {
             L3_dnd_timer_startTimer();                          //////timer_dnd돌리고 
@@ -121,7 +122,8 @@ static void L3service_processInputMode(void)
         }
         else if(input_mode == 27)                               //exit mode = esc key
         {
-            pc.printf("[ERROR]YOU DON'T CONNECTING WITH ANYONE!");
+            pc.printf("[ERROR]YOU DON'T CONNECTING WITH ANYONE!\n");
+            main_state = L3STATE_IDLE;                          //이상황이면이함수끝나고init_FSM바로종료되고다시시작해야됨....
         }
         else if(input_mode == '\n')                             //connection mode = enter key
         {
@@ -131,8 +133,8 @@ static void L3service_processInputMode(void)
             L3_dnd_timer_startTimer();                          ////////timer_cnn 돌려야됨
                                                                     ///////CONNECT_REQ??????????????????/
         }
-    
     }
+    
 }
 /* uint8_t L3_destId_return()
 {
@@ -143,6 +145,7 @@ static void L3service_processInputMode(void)
 
 void L3_initFSM()
 {
+    L3service_processInputMode();
     //initialize service layer
     pc.attach(&L3service_processInputWord, Serial::RxIrq);
 
