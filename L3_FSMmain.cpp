@@ -28,6 +28,7 @@ static Serial pc(USBTX, USBRX);
 //application event handler : generating SDU from keyboard input
 static void L3service_processInputWord(void)
 {
+    char input_exit;                                                         ///////esc두번받으려고
     char c = pc.getc();
     if (!L3_event_checkEventFlag(L3_event_dataToSend))
     {
@@ -36,26 +37,6 @@ static void L3service_processInputWord(void)
             originalWord[wordLen++] = '\0';
             L3_event_setEventFlag(L3_event_dataToSend);
             debug_if(DBGMSG_L3,"word is ready! ::: %s\n", originalWord);
-        }
-        else if (c == '\t')                             ///////TAB입력하면
-        {
-            main_state = L3STATE_CONNECTION;            ///////state=cnn이고
-            L3_dnd_timer_startTimer();                  ///////dnd용 2시간 timer시작한다 
-        }
-         else if (c == 27)                             ///////esc입력하면
-        {
-            pc.printf("\n ARE YOU SURE EXITING THIS CHAT?\n");
-            main_state = L3STATE_CONNECTION;            ///////state=CNN이고
-                if(c == 27)                             //////한번더esc입력되면
-                {
-                    pc.printf("\n exit the chatting mode! \n");
-                    main_state = L3STATE_IDLE;            ///////state=IDLE이고
-                }
-                else                                    //////esc아닌 다른 키 들어오면
-                {
-                    pc.printf("\n cancelled exit the chatting mode! \n");
-                    main_state = L3STATE_TX;            ///////state=tx로 돌아온다
-                }
         }
         else
         {
@@ -66,8 +47,62 @@ static void L3service_processInputWord(void)
                 L3_event_setEventFlag(L3_event_dataToSend);
                 pc.printf("\n max reached! word forced to be ready :::: %s\n", originalWord);
             }
+            else
+            {
+                if (c == '\t')                                                  ///////TAB입력하면
+                {       
+                    pc.printf("\n DND MODE ON!\n");
+                    main_state = L3STATE_CONNECTION;                            ///////state=cnn이고
+                    L3_dnd_timer_startTimer();                                  ///////dnd용 2시간 timer시작한다 
+                }
+                else if (c == 27)                                              ///////esc입력하면
+                {
+                    //originalWord[wordLen++] = '\0';                             //////초기화시키고
+                    L3_event_setEventFlag(L3_event_MODEctrlRcvd);               /////event 설정(esc두번받으려고)
+                    pc.printf("\n ARE YOU SURE EXITING THIS CHAT?\n");
+                    main_state = L3STATE_CONNECTION;                            ///////state=CNN이고
+                    pc.scanf("%c", &input_exit);                                //////한번더입력받아야됨
+
+                        if(input_exit == 27)                                    //////한번더esc입력되면
+                        {
+                            pc.printf("\n exit the chatting mode! \n");
+                            main_state = L3STATE_IDLE;                          ///////state=IDLE이고
+                        }
+                        else                                                    //////esc아닌 다른 키 들어오면
+                        {
+                            pc.printf("\n cancelled exit the chatting mode! \n");
+                            main_state = L3STATE_TX;                            ///////state=tx로 돌아온다
+                        }
+                }
+            }
         }
     }
+    /*else if(!L3_event_checkEventFlag(L3_event_MODEctrlRcvd))            ///////event = 제어정보 IND
+    {
+        if (c == '\t')                                                  ///////TAB입력하면
+        {
+            originalWord[wordLen++] = c;
+            pc.printf("\n DND MODE ON!\n");
+            main_state = L3STATE_CONNECTION;                            ///////state=cnn이고
+            L3_dnd_timer_startTimer();                                  ///////dnd용 2시간 timer시작한다 
+        }
+         else if (c == 27)                                              ///////esc입력하면
+        {
+            originalWord[wordLen++] = c;
+            pc.printf("\n ARE YOU SURE EXITING THIS CHAT?\n");
+            main_state = L3STATE_CONNECTION;                            ///////state=CNN이고
+                if(c == 27)                                             //////한번더esc입력되면
+                {
+                    pc.printf("\n exit the chatting mode! \n");
+                    main_state = L3STATE_IDLE;                          ///////state=IDLE이고
+                }
+                else                                                    //////esc아닌 다른 키 들어오면
+                {
+                    pc.printf("\n cancelled exit the chatting mode! \n");
+                    main_state = L3STATE_TX;                            ///////state=tx로 돌아온다
+                }
+        }
+    }*/
 }
 
 //mode 진입을 위한 제어 key SDU 생성=====================================
@@ -75,9 +110,10 @@ static void L3service_processInputMode(void)
 { 
     char input_mode = pc.getc();
 
-    pc.printf(":: ENTER THE MODE: ");      
-    pc.scanf("%c", &input_mode);
-                                           
+    pc.printf(":: ENTER THE MODE: \n");      
+    
+    if(!L3_event_checkEventFlag(L3_event_MODEctrlRcvd))            ///////event = 제어정보 IND
+    {                                       
         if(input_mode == '\t')                                      //dnd mode = tab key
         {
             L3_dnd_timer_startTimer();                          //////timer_dnd돌리고 
@@ -90,17 +126,18 @@ static void L3service_processInputMode(void)
         else if(input_mode == '\n')                             //connection mode = enter key
         {
             pc.printf(":: Give ID for destination: ");
-            pc.scanf("%d", &input_destId);
+            //pc.scanf("%d", &input_destId);
             main_state = L3STATE_CONNECTION;
             L3_dnd_timer_startTimer();                          ////////timer_cnn 돌려야됨
                                                                     ///////CONNECT_REQ??????????????????/
         }
+    
+    }
 }
-
-uint8_t L3_destId_return()
+/* uint8_t L3_destId_return()
 {
     return destIdnum;
-}
+} */
 
 //==============================================================
 
@@ -109,7 +146,7 @@ void L3_initFSM()
     //initialize service layer
     pc.attach(&L3service_processInputWord, Serial::RxIrq);
 
-    pc.printf("Give a word to send : ");
+    pc.printf("::Give a word to send : ");                          //////////:: for test
 }
 
 void L3_FSMrun(void)
