@@ -30,7 +30,7 @@ static void L3service_processInputWord(void)
 {
     char input_exit;                                                         ///////esc두번받으려고
     char c = pc.getc();
-    if (!L3_event_checkEventFlag(L3_event_dataToSend))
+    if (!L3_event_checkEventFlag(L3_event_dataToSend))                      ////////event != modectrl일때추가해야initFSM빠져나올것같은데??
     {
         if (c == '\n' || c == '\r')
         {
@@ -108,10 +108,12 @@ static void L3service_processInputWord(void)
 //mode 진입을 위한 제어 key SDU 생성=====================================
 static void L3service_processInputMode(void)
 { 
+    L3_event_setEventFlag(L3_event_MODEctrlRcvd);               /////event 설정??????????????????????????????
+
     pc.printf(":: ENTER THE MODE: \n");
     char input_mode = pc.getc();  
 
-    if (!L3_event_checkEventFlag(L3_event_dataToSend))
+    if (L3_event_checkEventFlag(L3_event_MODEctrlRcvd))
     {    
         originalWord[wordLen++] = input_mode;
 
@@ -131,10 +133,11 @@ static void L3service_processInputMode(void)
             //pc.scanf("%d", &input_destId);
             main_state = L3STATE_CONNECTION;
             L3_dnd_timer_startTimer();                          ////////timer_cnn 돌려야됨
-                                                                    ///////CONNECT_REQ??????????????????/
+                                                                    ///////CONNECT_REQ??????????????????
         }
     }
     
+    L3_event_clearEventFlag(L3_event_MODEctrlRcvd);                  /////event 종료?????????????????????????????
 }
 /* uint8_t L3_destId_return()
 {
