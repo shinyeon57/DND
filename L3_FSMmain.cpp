@@ -130,9 +130,10 @@ static void L3service_processInputMode(void)
         else if(input_mode == '\n')                             //connection mode = enter key
         {
             pc.printf(":: Give ID for destination: ");
+            L3_event_setEventFlag(L3_event_MODEctrlRcvd_CNN);
             //pc.scanf("%d", &input_destId);
             main_state = L3STATE_CONNECTION;
-            L3_dnd_timer_startTimer();                          ////////timer_cnn 돌려야됨
+            //L3_dnd_timer_startTimer();                          ////////timer_cnn 돌려야됨
                                                                     ///////CONNECT_REQ??????????????????
         }
     }
@@ -208,9 +209,18 @@ void L3_FSMrun(void)
             }
             break;
 
-        case L3STATE_CONNECTION :                   ///////////////////state = cnn
-
-        case L3STATE_TX :                           ///////////////////state = tx
+        case L3STATE_CONNECTION :                                   ///////////////////state = cnn
+        
+            if(L3_event_checkEventFlag(L3_event_DND_Timeout))       ///////////////////dnd_timeout event happens
+            {
+                pc.printf("FAIL TO CONNECTION!\n");
+                main_state = L3STATE_IDLE ;
+            }
+            else if(L3_event_checkEventFlag(L3_event_MODEctrlRcvd_CNN))
+            {
+                    //id 입력받는 함수.
+            }
+        case L3STATE_TX :                                           ///////////////////state = tx
 
 
         default :
