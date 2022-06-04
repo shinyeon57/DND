@@ -127,7 +127,7 @@ static void L3service_processInputMode(void)
             pc.printf("[ERROR]YOU DON'T CONNECTING WITH ANYONE!\n");
             main_state = L3STATE_IDLE;                          //이상황이면이함수끝나고init_FSM바로종료되고다시시작해야됨....
         }
-        else if(input_mode == '\n')                             //connection mode = enter key
+        else                              //connection mode = enter key
         {
             pc.printf(":: Give ID for destination: ");
             L3_event_setEventFlag(L3_event_MODEctrlRcvd_CNN);
