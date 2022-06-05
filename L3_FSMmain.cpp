@@ -185,7 +185,13 @@ void L3_FSMrun(void)
             else if (L3_event_checkEventFlag(L3_event_dataToSend)) //if data needs to be sent (keyboard input)
             {
 #ifdef ENABLE_CHANGEIDCMD
-                if (strncmp((const char*)originalWord, "changeID: ",9) == 0)
+                if (strncmp((const char*)originalWord, "changeDstID: ",9) == 0)
+                {
+                    uint8_t dstid = originalWord[9] - '0';
+                    debug("[L3] requesting to change to dest id %i\n", dstid);
+                    L3_LLI_configReqFunc(L2L3_CFGTYPE_DSTID, dstid);
+                }
+                else if (strncmp((const char*)originalWord, "changeSrcID: ",9) == 0)
                 {
                     uint8_t myid = originalWord[9] - '0';
                     debug("[L3] requesting to change to srce id %i\n", myid);

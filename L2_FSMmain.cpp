@@ -45,19 +45,31 @@ static uint8_t L2_validityCheck_ID(void)
     return 0;
 }
 
+void L2_configDestId(uint8_t destId)
+{
+    destL2ID = destId;
+
+    L2_validityCheck_ID();
+}
+
 int L2_LLI_handleConfigReq(uint8_t type, uint8_t value)
 {
+    #ifdef ENABLE_CHANGEIDCMD
     if (type == L2L3_CFGTYPE_SRCID)
     {
         myL2ID = value;
         L2_event_setEventFlag(L2_event_configSrcId);
+    }
+    else if (type == L2L3_CFGTYPE_DSTID)
+    {
+        L2_configDestId(value);
     }
     else
     {
         debug("[ERROR in L2 config : unrecognized config type : %i\n", type);
         return -1;
     }
-
+    #endif
     return 0;
 }
 
@@ -83,17 +95,6 @@ void L2_initFSM(uint8_t myId, uint8_t destId)
     L3_LLI_setDataReqFunc(L2_LLI_handleDataReq);
     L3_LLI_setConfigReqFunc(L2_LLI_handleConfigReq);
 }
-
-void L2_configDestId(uint8_t destId)
-{
-    destL2ID = destId;
-
-    L2_validityCheck_ID();
-}
-
-
-
-
 
 void L2_FSMrun(void)
 {

@@ -10,4 +10,7 @@
 
 
 
+#ifdef ENABLE_CHANGEIDCMD
 #define L2L3_CFGTYPE_SRCID              0
+#define L2L3_CFGTYPE_DSTID              1
+#endif
